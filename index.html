@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Access Terminal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00ff41;
+            --primary-dark: #00cc33;
+            --secondary: #008f11;
+            --background: #0a0a0a;
+            --surface: #121212;
+            --surface-light: #1e1e1e;
+            --text: #e0e0e0;
+            --text-light: #a0a0a0;
+            --border: #333333;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.8), 0 2px 4px -1px rgba(0, 0, 0, 0.6);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', 'Fira Code', monospace;
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--surface);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        
+        .login-screen {
+            padding: 40px 30px;
+            transition: transform 0.5s ease;
+        }
+        
+        .content-screen {
+            padding: 40px 30px;
+            display: none;
+            text-align: center;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+        }
+        
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--background);
+            font-weight: bold;
+            margin-right: 12px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            color: var(--text-light);
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text);
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 16px;
+            color: var(--text);
+            transition: all 0.2s;
+        }
+        
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 255, 65, 0.2);
+        }
+        
+        .btn {
+            background: var(--primary);
+            color: var(--background);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 1px;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .error-message {
+            color: #ff3333;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .hint {
+            color: var(--text-light);
+            margin-top: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        /* Terminal Styles */
+        .terminal {
+            background: #000;
+            color: var(--primary);
+            padding: 20px;
+            border-radius: 6px;
+            margin: 25px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            border: 1px solid var(--border);
+            text-align: left;
+            min-height: 200px;
+            overflow: hidden;
+        }
+        
+        .terminal-line {
+            margin-bottom: 10px;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        
+        .terminal-prompt {
+            color: var(--primary);
+        }
+        
+        .terminal-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background: var(--primary);
+            margin-left: 4px;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+        
+        .typewriter {
+            overflow: hidden;
+            border-right: 2px solid var(--primary);
+            white-space: nowrap;
+            margin: 0 auto;
+            animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+        
+        /* Matrix Style Rain */
+        .matrix-rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.1;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+        }
+        
+        .secondary-btn {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        
+        .secondary-btn:hover {
+            background: rgba(0, 255, 65, 0.1);
+        }
+        
+        /* Animations */
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--primary) }
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        
+        .glitch {
+            animation: glitch 0.5s;
+        }
+        
+        /* Success Animation */
+        .success-animation {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary);
+            margin: 0 auto 20px;
+            position: relative;
+            animation: scaleIn 0.5s ease-out;
+        }
+        
+        .checkmark:after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 15px;
+            border-left: 4px solid var(--background);
+            border-bottom: 4px solid var(--background);
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+        
+        @keyframes scaleIn {
+            0% { transform: scale(0); }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                border-radius: 6px;
+            }
+            
+            .login-screen, .content-screen {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-rain" id="matrixRain"></div>
+    
+    <div class="container">
+        <div class="login-screen" id="loginScreen">
+            <div class="header">
+                <div class="logo">SYS</div>
+                <h1>SECURE ACCESS TERMINAL</h1>
+            </div>
+            
+            <p class="subtitle">Authentication required for system access</p>
+            
+            <div class="form-group">
+                <label for="passwordInput">ACCESS CODE</label>
+                <input type="password" id="passwordInput" placeholder="Enter authorization code">
+                <div class="error-message" id="errorMessage">ERROR: Invalid access code. Try again.</div>
+            </div>
+            
+            <button class="btn" onclick="checkPassword()">
+                <i class="fas fa-key"></i> AUTHENTICATE
+            </button>
+            
+            <p class="hint">Hint: Think of something that connects us</p>
+        </div>
+        
+        <div class="content-screen" id="contentScreen">
+            <div class="header">
+                <div class="logo">SYS</div>
+                <h1>ACCESS GRANTED</h1>
+            </div>
+            
+            <div class="success-animation">
+                <div class="checkmark"></div>
+                <p>Authentication successful. Welcome, authorized user.</p>
+            </div>
+            
+            <div class="terminal" id="terminal">
+                <!-- Terminal content will be populated by JavaScript -->
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn" onclick="showSecret()">
+                    <i class="fas fa-user-secret"></i> REVEAL SECRET
+                </button>
+                <button class="btn secondary-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> LOG OUT
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function checkPassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const errorMessage = document.getElementById('errorMessage');
+            const loginScreen = document.getElementById('loginScreen');
+            const contentScreen = document.getElementById('contentScreen');
+            
+            if (passwordInput.value.toLowerCase() === 'knots') {
+                // Correct password
+                loginScreen.style.display = 'none';
+                contentScreen.style.display = 'block';
+                
+                // Start terminal animation
+                startTerminalAnimation();
+            } else {
+                // Incorrect password
+                errorMessage.style.display = 'block';
+                passwordInput.style.borderColor = '#ff3333';
+                
+                // Glitch animation for wrong password
+                passwordInput.classList.add('glitch');
+                setTimeout(() => {
+                    passwordInput.classList.remove('glitch');
+                }, 500);
+            }
+        }
+        
+        function startTerminalAnimation() {
+            const terminal = document.getElementById('terminal');
+            const lines = [
+                {text: "> Initializing secure connection...", delay: 500},
+                {text: "> Connection established.", delay: 1000},
+                {text: "> Verifying user credentials...", delay: 800},
+                {text: "> User authentication: SUCCESS", delay: 600},
+                {text: "> Loading personalized message...", delay: 900},
+                {text: "> ", delay: 500, typewriter: true, message: "Hey there, fellow code wrangler! You cracked the code! 🔓"},
+                {text: "> ", delay: 1500, typewriter: true, message: "Just wanted to say you're an awesome partner in crime."},
+                {text: "> ", delay: 1500, typewriter: true, message: "Your debugging skills are almost as impressive as your patience with my bad puns."},
+                {text: "> ", delay: 1500, typewriter: true, message: "أنت صديق رائع وأتمنى لك يوماً سعيداً"},
+                {text: "> ", delay: 1500, typewriter: true, message: "(You're a great friend and I wish you a happy day)"},
+                {text: "> Message transmission complete.", delay: 1000},
+                {text: "> System ready for additional commands.", delay: 800}
+            ];
+            
+            let currentLine = 0;
+            
+            function addLine() {
+                if (currentLine >= lines.length) {
+                    // Add blinking cursor at the end
+                    const cursorLine = document.createElement('div');
+                    cursorLine.className = 'terminal-line';
+                    cursorLine.innerHTML = '<span class="terminal-prompt">user@system:~$</span><span class="terminal-cursor"></span>';
+                    terminal.appendChild(cursorLine);
+                    return;
+                }
+                
+                const line = document.createElement('div');
+                line.className = 'terminal-line';
+                
+                if (lines[currentLine].typewriter) {
+                    line.innerHTML = `<span class="terminal-prompt">${lines[currentLine].text}</span>`;
+                    terminal.appendChild(line);
+                    
+                    // Typewriter effect
+                    const typewriterElem = document.createElement('span');
+                    line.appendChild(typewriterElem);
+                    
+                    let i = 0;
+                    const txt = lines[currentLine].message;
+                    const speed = 50;
+                    
+                    function typeWriter() {
+                        if (i < txt.length) {
+                            typewriterElem.innerHTML += txt.charAt(i);
+                            i++;
+                            setTimeout(typeWriter, speed);
+                        } else {
+                            currentLine++;
+                            setTimeout(addLine, lines[currentLine-1].delay);
+                        }
+                    }
+                    
+                    setTimeout(typeWriter, 300);
+                } else {
+                    line.innerHTML = `<span class="terminal-prompt">${lines[currentLine].text}</span>`;
+                    terminal.appendChild(line);
+                    currentLine++;
+                    setTimeout(addLine, lines[currentLine-1].delay);
+                }
+            }
+            
+            addLine();
+        }
+        
+        function showSecret() {
+            const secrets = [
+                "SECRET CLEARANCE LEVEL 2: I bet you can't solve this - Why do programmers prefer dark mode? Because light attracts bugs!",
+                "SECRET CLEARANCE LEVEL 2: Debugging fact - The best debugger is a good night's sleep. Or maybe just asking you for help!",
+                "SECRET CLEARANCE LEVEL 2: CSS joke - Why did the CSS selector feel lonely? Because it had no class!",
+                "SECRET CLEARANCE LEVEL 2: Your code reviews are actually helpful, don't tell anyone I said that.",
+                "SECRET CLEARANCE LEVEL 2: We should collaborate on a project sometime. Your skills + my skills = unstoppable!",
+                "SECRET CLEARANCE LEVEL 2: You know you're a programmer when you spend 2 hours automating a 10-minute task.",
+                "SECRET CLEARANCE LEVEL 2: Did you know? In ancient Egypt, knots were symbols of protection and connection.",
+                "SECRET CLEARANCE LEVEL 2: Your problem-solving skills are almost as impressive as your patience with my bad puns."
+            ];
+            
+            const randomSecret = secrets[Math.floor(Math.random() * secrets.length)];
+            
+            // Create a temporary terminal-like alert
+            const secretAlert = document.createElement('div');
+            secretAlert.style.background = '#000';
+            secretAlert.style.color = '#00ff41';
+            secretAlert.style.padding = '20px';
+            secretAlert.style.borderRadius = '6px';
+            secretAlert.style.border = '1px solid #333';
+            secretAlert.style.fontFamily = "'Courier New', monospace";
+            secretAlert.style.position = 'fixed';
+            secretAlert.style.top = '50%';
+            secretAlert.style.left = '50%';
+            secretAlert.style.transform = 'translate(-50%, -50%)';
+            secretAlert.style.zIndex = '1000';
+            secretAlert.style.maxWidth = '90%';
+            secretAlert.style.width = '400px';
+            secretAlert.style.boxShadow = '0 0 20px rgba(0, 255, 65, 0.3)';
+            secretAlert.innerHTML = `
+                <div style="margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px;">
+                    <i class="fas fa-user-secret"></i> CLASSIFIED INFORMATION
+                </div>
+                <div style="margin-bottom: 20px;">${randomSecret}</div>
+                <button onclick="this.parentElement.remove()" style="background: #00ff41; color: #000; border: none; padding: 8px 16px; border-radius: 4px; font-family: 'Courier New'; cursor: pointer; width: 100%;">ACKNOWLEDGE</button>
+            `;
+            
+            document.body.appendChild(secretAlert);
+        }
+        
+        function logout() {
+            const loginScreen = document.getElementById('loginScreen');
+            const contentScreen = document.getElementById('contentScreen');
+            const passwordInput = document.getElementById('passwordInput');
+            const errorMessage = document.getElementById('errorMessage');
+            const terminal = document.getElementById('terminal');
+            
+            contentScreen.style.display = 'none';
+            loginScreen.style.display = 'block';
+            passwordInput.value = '';
+            errorMessage.style.display = 'none';
+            passwordInput.style.borderColor = '';
+            terminal.innerHTML = '';
+        }
+        
+        // Create matrix rain effect
+        function createMatrixRain() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const matrixRain = document.getElementById('matrixRain');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            matrixRain.appendChild(canvas);
+            
+            const chars = "01010101010101010101010101010101";
+            const charArray = chars.split("");
+            const rainDrops = [];
+            
+            const font_size = 14;
+            const columns = canvas.width / font_size;
+            
+            for(let x = 0; x < columns; x++) {
+                rainDrops[x] = 1;
+            }
+            
+            function draw() {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.04)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = "#00ff41";
+                ctx.font = font_size + "px monospace";
+                
+                for(let i = 0; i < rainDrops.length; i++) {
+                    const text = charArray[Math.floor(Math.random() * charArray.length)];
+                    ctx.fillText(text, i * font_size, rainDrops[i] * font_size);
+                    
+                    if(rainDrops[i] * font_size > canvas.height && Math.random() > 0.975) {
+                        rainDrops[i] = 0;
+                    }
+                    rainDrops[i]++;
+                }
+            }
+            
+            setInterval(draw, 35);
+        }
+        
+        // Initialize matrix rain
+        window.onload = function() {
+            createMatrixRain();
+            
+            // Allow submitting with Enter key
+            document.getElementById('passwordInput').addEventListener('keyup', function(event) {
+                if (event.key === 'Enter') {
+                    checkPassword();
+                }
+            });
+        };
+    </script>
+</body>
+</html>
