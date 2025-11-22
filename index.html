@@ -35,6 +35,8 @@
             align-items: center;
             padding: 20px;
             line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
         }
         
         .container {
@@ -45,6 +47,8 @@
             box-shadow: var(--shadow);
             overflow: hidden;
             border: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
         }
         
         .login-screen {
@@ -161,24 +165,77 @@
         }
         
         /* Terminal Styles */
+        .terminal-container {
+            position: relative;
+            margin: 25px 0;
+        }
+        
+        .terminal-header {
+            background: #1a1a1a;
+            padding: 8px 15px;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+        
+        .terminal-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .terminal-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .control-close { background: #ff5f57; }
+        .control-minimize { background: #ffbd2e; }
+        .control-maximize { background: #28ca42; }
+        
         .terminal {
             background: #000;
             color: var(--primary);
-            padding: 20px;
-            border-radius: 6px;
-            margin: 25px 0;
+            padding: 15px;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
             font-family: 'Courier New', monospace;
-            font-size: 16px;
+            font-size: 15px;
             border: 1px solid var(--border);
             text-align: left;
-            min-height: 200px;
-            overflow: hidden;
+            height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) #000;
+        }
+        
+        .terminal::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .terminal::-webkit-scrollbar-track {
+            background: #000;
+        }
+        
+        .terminal::-webkit-scrollbar-thumb {
+            background-color: var(--primary);
+            border-radius: 4px;
         }
         
         .terminal-line {
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             opacity: 0;
             animation: fadeIn 0.5s forwards;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            max-width: 100%;
         }
         
         .terminal-prompt {
@@ -188,7 +245,7 @@
         .terminal-cursor {
             display: inline-block;
             width: 8px;
-            height: 18px;
+            height: 16px;
             background: var(--primary);
             margin-left: 4px;
             animation: blink 1s infinite;
@@ -198,20 +255,21 @@
         .typewriter {
             overflow: hidden;
             border-right: 2px solid var(--primary);
-            white-space: nowrap;
-            margin: 0 auto;
-            animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-width: 100%;
+            display: inline;
         }
         
         /* Matrix Style Rain */
-        .matrix-rain {
-            position: absolute;
+        #matrixRain {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: -1;
+            z-index: 0;
             opacity: 0.1;
         }
         
@@ -316,11 +374,21 @@
             .action-buttons {
                 flex-direction: column;
             }
+            
+            .terminal {
+                height: 250px;
+                font-size: 14px;
+                padding: 12px;
+            }
+            
+            .terminal-line {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="matrix-rain" id="matrixRain"></div>
+    <div id="matrixRain"></div>
     
     <div class="container">
         <div class="login-screen" id="loginScreen">
@@ -355,8 +423,18 @@
                 <p>Authentication successful. Welcome, authorized user.</p>
             </div>
             
-            <div class="terminal" id="terminal">
-                <!-- Terminal content will be populated by JavaScript -->
+            <div class="terminal-container">
+                <div class="terminal-header">
+                    <span>secure-terminal.exe</span>
+                    <div class="terminal-controls">
+                        <div class="terminal-control control-close"></div>
+                        <div class="terminal-control control-minimize"></div>
+                        <div class="terminal-control control-maximize"></div>
+                    </div>
+                </div>
+                <div class="terminal" id="terminal">
+                    <!-- Terminal content will be populated by JavaScript -->
+                </div>
             </div>
             
             <div class="action-buttons">
@@ -423,6 +501,9 @@
                     cursorLine.className = 'terminal-line';
                     cursorLine.innerHTML = '<span class="terminal-prompt">user@system:~$</span><span class="terminal-cursor"></span>';
                     terminal.appendChild(cursorLine);
+                    
+                    // Auto scroll to bottom
+                    terminal.scrollTop = terminal.scrollHeight;
                     return;
                 }
                 
@@ -433,8 +514,12 @@
                     line.innerHTML = `<span class="terminal-prompt">${lines[currentLine].text}</span>`;
                     terminal.appendChild(line);
                     
+                    // Auto scroll to bottom
+                    terminal.scrollTop = terminal.scrollHeight;
+                    
                     // Typewriter effect
                     const typewriterElem = document.createElement('span');
+                    typewriterElem.className = 'typewriter';
                     line.appendChild(typewriterElem);
                     
                     let i = 0;
@@ -445,8 +530,14 @@
                         if (i < txt.length) {
                             typewriterElem.innerHTML += txt.charAt(i);
                             i++;
+                            
+                            // Auto scroll to bottom during typing
+                            terminal.scrollTop = terminal.scrollHeight;
+                            
                             setTimeout(typeWriter, speed);
                         } else {
+                            // Remove the typing cursor when done
+                            typewriterElem.style.borderRight = 'none';
                             currentLine++;
                             setTimeout(addLine, lines[currentLine-1].delay);
                         }
@@ -456,6 +547,10 @@
                 } else {
                     line.innerHTML = `<span class="terminal-prompt">${lines[currentLine].text}</span>`;
                     terminal.appendChild(line);
+                    
+                    // Auto scroll to bottom
+                    terminal.scrollTop = terminal.scrollHeight;
+                    
                     currentLine++;
                     setTimeout(addLine, lines[currentLine-1].delay);
                 }
@@ -494,6 +589,8 @@
             secretAlert.style.maxWidth = '90%';
             secretAlert.style.width = '400px';
             secretAlert.style.boxShadow = '0 0 20px rgba(0, 255, 65, 0.3)';
+            secretAlert.style.wordWrap = 'break-word';
+            secretAlert.style.overflowWrap = 'break-word';
             secretAlert.innerHTML = `
                 <div style="margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px;">
                     <i class="fas fa-user-secret"></i> CLASSIFIED INFORMATION
@@ -522,12 +619,17 @@
         
         // Create matrix rain effect
         function createMatrixRain() {
+            const matrixRain = document.getElementById('matrixRain');
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            const matrixRain = document.getElementById('matrixRain');
             
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            // Set canvas to full viewport size
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            
+            resizeCanvas();
             matrixRain.appendChild(canvas);
             
             const chars = "01010101010101010101010101010101";
@@ -537,11 +639,13 @@
             const font_size = 14;
             const columns = canvas.width / font_size;
             
+            // Initialize raindrops
             for(let x = 0; x < columns; x++) {
-                rainDrops[x] = 1;
+                rainDrops[x] = Math.floor(Math.random() * canvas.height / font_size);
             }
             
             function draw() {
+                // Semi-transparent black to create fade effect
                 ctx.fillStyle = "rgba(0, 0, 0, 0.04)";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
@@ -549,16 +653,35 @@
                 ctx.font = font_size + "px monospace";
                 
                 for(let i = 0; i < rainDrops.length; i++) {
+                    // Random character
                     const text = charArray[Math.floor(Math.random() * charArray.length)];
+                    
+                    // Draw the character
                     ctx.fillText(text, i * font_size, rainDrops[i] * font_size);
                     
+                    // Reset raindrop when it reaches the bottom with some randomness
                     if(rainDrops[i] * font_size > canvas.height && Math.random() > 0.975) {
                         rainDrops[i] = 0;
                     }
+                    
                     rainDrops[i]++;
                 }
             }
             
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                resizeCanvas();
+                // Reinitialize raindrops for new column count
+                const newColumns = canvas.width / font_size;
+                while(rainDrops.length < newColumns) {
+                    rainDrops.push(Math.floor(Math.random() * canvas.height / font_size));
+                }
+                while(rainDrops.length > newColumns) {
+                    rainDrops.pop();
+                }
+            });
+            
+            // Start animation
             setInterval(draw, 35);
         }
         
